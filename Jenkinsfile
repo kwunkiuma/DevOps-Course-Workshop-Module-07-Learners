@@ -1,20 +1,30 @@
 pipeline {
-    agent any
+    agent none
 
     stages {
-        stage('Build') {
+        stage('Node') {
+            agent {
+                docker { image 'node:16.13.1-alpine' }
+            }
             steps {
-                echo 'Building..'
+                dir ('DotnetTemplate.Web') {
+                    sh 'pwd'
+                    sh 'node --version'
+                    sh 'npm ci'
+                    sh 'npm run build'
+                }
             }
         }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
+        stage('.NET') {
+            agent {
+                docker { image 'mcr.microsoft.com/dotnet/sdk:6.0' }
             }
-        }
-        stage('Deploy') {
+            environment {
+                DOTNET_CLI_HOME = '/tmp/dotnet_cli_home'
+            }
             steps {
-                echo 'Deploying....'
+                sh 'dotnet build'
+                sh 'dotnet test'
             }
         }
     }
